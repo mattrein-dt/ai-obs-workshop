@@ -1,0 +1,9 @@
+.git
+node_modules
+.next
+target
+*.class
+*.jar
+__pycache__
+*.pyc
+.env

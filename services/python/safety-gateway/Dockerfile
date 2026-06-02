@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     protobuf-compiler && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY services/python/safety-gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy proto files and generate stubs
@@ -16,7 +16,7 @@ RUN python -m grpc_tools.protoc \
     --grpc_python_out=/app \
     /proto/safety.proto
 
-COPY app/ ./app/
+COPY services/python/safety-gateway/app/ ./app/
 
 EXPOSE 50053 9090
 CMD ["python", "-m", "app.main"]

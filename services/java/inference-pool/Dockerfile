@@ -1,7 +1,7 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
+COPY services/java/inference-pool/pom.xml .
+COPY services/java/inference-pool/src ./src
 
 RUN apk add --no-cache maven && \
     mvn package -DskipTests -q

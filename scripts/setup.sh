@@ -61,27 +61,26 @@ echo "Building service images..."
 
 build_and_push() {
   local svc="$1"
-  local context="$2"
-  local dockerfile="${3:-Dockerfile}"
+  local dockerfile="$2"
   
   echo "  Building $svc..."
   docker build -t "${REGISTRY}/daystrom-ai/${svc}:latest" \
-    -f "${context}/${dockerfile}" "$context" --quiet
+    -f "${dockerfile}" . --quiet
   docker push "${REGISTRY}/daystrom-ai/${svc}:latest" 2>/dev/null
 }
 
 # Java services (Spring Boot)
-build_and_push "request-orchestrator" "services/java/request-orchestrator"
-build_and_push "prompt-cache" "services/java/prompt-cache"
-build_and_push "inference-pool" "services/java/inference-pool"
+build_and_push "request-orchestrator" "services/java/request-orchestrator/Dockerfile"
+build_and_push "prompt-cache" "services/java/prompt-cache/Dockerfile"
+build_and_push "inference-pool" "services/java/inference-pool/Dockerfile"
 
 # Python services
-build_and_push "model-router" "services/python/model-router"
-build_and_push "safety-gateway" "services/python/safety-gateway"
-build_and_push "mock-server" "services/python/mock-server"
+build_and_push "model-router" "services/python/model-router/Dockerfile"
+build_and_push "safety-gateway" "services/python/safety-gateway/Dockerfile"
+build_and_push "mock-server" "services/python/mock-server/Dockerfile"
 
 # Web app (TypeScript)
-build_and_push "web-app" "services/typescript/web-app"
+build_and_push "web-app" "services/typescript/web-app/Dockerfile"
 
 # ─── Update image references in kustomization ───────────────────────
 echo ""

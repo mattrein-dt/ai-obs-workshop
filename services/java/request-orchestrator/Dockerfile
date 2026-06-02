@@ -1,8 +1,8 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-COPY ../../proto /proto
+COPY services/java/request-orchestrator/pom.xml .
+COPY services/java/request-orchestrator/src ./src
+COPY proto /proto
 
 RUN apk add --no-cache maven && \
     mvn package -DskipTests -q

@@ -26,13 +26,13 @@ logs:
 ## Build all service images
 build:
 	@echo "Building all images..."
-	@docker build -t $(REGISTRY)/daystrom-ai/request-orchestrator:latest services/java/request-orchestrator
-	@docker build -t $(REGISTRY)/daystrom-ai/prompt-cache:latest services/java/prompt-cache
-	@docker build -t $(REGISTRY)/daystrom-ai/inference-pool:latest services/java/inference-pool
-	@docker build -t $(REGISTRY)/daystrom-ai/model-router:latest services/python/model-router
-	@docker build -t $(REGISTRY)/daystrom-ai/safety-gateway:latest services/python/safety-gateway
-	@docker build -t $(REGISTRY)/daystrom-ai/mock-server:latest services/python/mock-server
-	@docker build -t $(REGISTRY)/daystrom-ai/web-app:latest services/typescript/web-app
+	@docker build -t $(REGISTRY)/daystrom-ai/request-orchestrator:latest -f services/java/request-orchestrator/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/prompt-cache:latest -f services/java/prompt-cache/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/inference-pool:latest -f services/java/inference-pool/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/model-router:latest -f services/python/model-router/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/safety-gateway:latest -f services/python/safety-gateway/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/mock-server:latest -f services/python/mock-server/Dockerfile .
+	@docker build -t $(REGISTRY)/daystrom-ai/web-app:latest -f services/typescript/web-app/Dockerfile .
 
 ## Build and push a single service (usage: make build-svc SVC=model-router LANG=python)
 build-svc:
