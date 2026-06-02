@@ -54,7 +54,9 @@ echo "Cluster ready. Context:"
 kubectl cluster-info
 
 # ─── Build and push service images ──────────────────────────────────
-REGISTRY="k3d-${REGISTRY_NAME}:${REGISTRY_PORT}"
+# localhost for host-side docker push; k3d hostname for in-cluster pulls
+HOST_REGISTRY="localhost:${REGISTRY_PORT}"
+CLUSTER_REGISTRY="k3d-${REGISTRY_NAME}:${REGISTRY_PORT}"
 
 echo ""
 echo "Building service images..."
@@ -64,9 +66,9 @@ build_and_push() {
   local dockerfile="$2"
   
   echo "  Building $svc..."
-  docker build -t "${REGISTRY}/daystrom-ai/${svc}:latest" \
+  docker build -t "${HOST_REGISTRY}/daystrom-ai/${svc}:latest" \
     -f "${dockerfile}" . --quiet
-  docker push "${REGISTRY}/daystrom-ai/${svc}:latest" 2>/dev/null
+  docker push "${HOST_REGISTRY}/daystrom-ai/${svc}:latest"
 }
 
 # Java services (Spring Boot)
@@ -95,10 +97,10 @@ kubectl create secret generic dt-credentials \
   --from-literal="DT_API_TOKEN=${DT_API_TOKEN}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Apply with image override to local registry
+# Apply with image override to local registry (use cluster-side hostname)
 kubectl apply -k k8s/base/ \
   --dry-run=client -o yaml | \
-  sed "s|daystrom-ai/|${REGISTRY}/daystrom-ai/|g" | \
+  sed "s|daystrom-ai/|${CLUSTER_REGISTRY}/daystrom-ai/|g" | \
   kubectl apply -f -
 
 # ─── Wait for rollout ───────────────────────────────────────────────

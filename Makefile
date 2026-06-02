@@ -1,7 +1,7 @@
 .PHONY: up down build status logs clean
 
 CLUSTER_NAME := daystrom
-REGISTRY := k3d-daystrom-registry:5111
+REGISTRY := localhost:5111
 
 # ─── Primary targets ────────────────────────────────────────────────
 
