@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package daystrom.ai.v1;
+
+option java_multiple_files = true;
+option java_package = "com.daystrom.proto";
+
+service InferenceService {
+  rpc Infer(InferenceRequest) returns (stream InferenceResponse);
+}
+
+message InferenceRequest {
+  string model = 1;
+  string prompt = 2;
+  int32 max_tokens = 3;
+  float temperature = 4;
+  float top_p = 5;
+  int32 context_length = 6;
+  string request_id = 7;
+  string tenant_id = 8;
+}
+
+message InferenceResponse {
+  string text = 1;
+  int32 tokens_generated = 2;
+  int64 latency_ms = 3;
+  string pool_name = 4;
+  bool cache_hit = 5;
+  string finish_reason = 6;
+}

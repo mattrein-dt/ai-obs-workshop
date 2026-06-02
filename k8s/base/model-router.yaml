@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-router
+  namespace: daystrom-ai
+  labels:
+    app: model-router
+    app.kubernetes.io/part-of: daystrom-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-router
+  template:
+    metadata:
+      labels:
+        app: model-router
+    spec:
+      containers:
+        - name: model-router
+          image: daystrom-ai/model-router:latest
+          ports:
+            - containerPort: 50052
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - configMapRef:
+                name: otel-config
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: "model-router"
+            - name: GRPC_PORT
+              value: "50052"
+            - name: INFERENCE_POOL_ADDR
+              value: "inference-pool.daystrom-ai.svc.cluster.local:8081"
+            - name: STREAM_RESPONSES
+              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "true"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-router
+  namespace: daystrom-ai
+spec:
+  selector:
+    app: model-router
+  ports:
+    - port: 50052
+      targetPort: 50052

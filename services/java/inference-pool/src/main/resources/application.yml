@@ -1,0 +1,20 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: inference-pool
+
+inference-pool:
+  vllm-base-url: ${VLLM_BASE_URL:http://localhost:8080}
+  pool-name: ${POOL_NAME:pool-a-codespace}
+  pool-type: ${POOL_TYPE:large}
+  chip-type: ${CHIP_TYPE:cpu}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  server:
+    port: 9090

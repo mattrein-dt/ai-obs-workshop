@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: request-orchestrator
+  data:
+    redis:
+      url: ${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}
+
+grpc:
+  client:
+    prompt-cache:
+      address: static://${PROMPT_CACHE_ADDR:prompt-cache:50051}
+      negotiation-type: plaintext
+    safety-gateway:
+      address: static://${SAFETY_GATEWAY_ADDR:safety-gateway:50053}
+      negotiation-type: plaintext
+    model-router:
+      address: static://${MODEL_ROUTER_ADDR:model-router:50052}
+      negotiation-type: plaintext
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus

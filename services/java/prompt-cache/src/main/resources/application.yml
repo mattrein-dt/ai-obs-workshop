@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: prompt-cache
+  data:
+    redis:
+      url: ${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}
+
+grpc:
+  server:
+    port: ${GRPC_PORT:50051}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  server:
+    port: 9090

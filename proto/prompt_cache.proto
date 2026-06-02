@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package daystrom.promptcache.v1;
+
+option java_multiple_files = true;
+option java_package = "com.daystrom.proto";
+
+service PromptCacheService {
+  rpc GetCachedPrefix(GetCachedPrefixRequest) returns (GetCachedPrefixResponse);
+  rpc PutPrefix(PutPrefixRequest) returns (PutPrefixResponse);
+}
+
+message GetCachedPrefixRequest {
+  string prompt_hash = 1;
+}
+
+message GetCachedPrefixResponse {
+  bool found = 1;
+  bytes tokens = 2;
+  int32 cached_tokens = 3;
+}
+
+message PutPrefixRequest {
+  string prompt_hash = 1;
+  bytes tokens = 2;
+  int64 ttl_seconds = 3;
+}
+
+message PutPrefixResponse {
+  bool success = 1;
+}

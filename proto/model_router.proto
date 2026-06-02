@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package daystrom.modelrouter.v1;
+
+option java_multiple_files = true;
+option java_package = "com.daystrom.proto";
+
+service ModelRouterService {
+  rpc RouteInference(RouteInferenceRequest) returns (stream RouteInferenceResponse);
+}
+
+message RouteInferenceRequest {
+  string model_id = 1;
+  string prompt = 2;
+  int32 max_tokens = 3;
+  float temperature = 4;
+  string request_id = 5;
+  string tenant_id = 6;
+}
+
+message RouteInferenceResponse {
+  string text = 1;
+  int32 tokens_generated = 2;
+  string pool_name = 3;
+  string finish_reason = 4;
+}
