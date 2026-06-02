@@ -1,10 +1,11 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends maven && rm -rf /var/lib/apt/lists/*
+
 COPY services/java/inference-pool/pom.xml .
 COPY services/java/inference-pool/src ./src
 
-RUN apk add --no-cache maven && \
-    mvn package -DskipTests -q
+RUN mvn package -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
