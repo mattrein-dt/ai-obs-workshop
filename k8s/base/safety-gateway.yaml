@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: safety-gateway
-  namespace: daystrom-ai
+  namespace: daystrom-mini
   labels:
     app: safety-gateway
-    app.kubernetes.io/part-of: daystrom-ai
+    app.kubernetes.io/part-of: daystrom-mini
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: safety-gateway
-          image: daystrom-ai/safety-gateway:latest
+          image: daystrom-mini/safety-gateway:latest
           ports:
             - containerPort: 50053
             - containerPort: 9090
@@ -31,7 +31,7 @@ spec:
             - name: OTEL_SERVICE_NAME
               value: "safety-gateway"
             - name: SAFETY_MODEL_URL
-              value: "http://mock-safety.daystrom-ai.svc.cluster.local:8000"
+              value: "http://mock-safety.daystrom-mini.svc.cluster.local:8000"
             - name: GRPC_PORT
               value: "50053"
           resources:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: safety-gateway
-  namespace: daystrom-ai
+  namespace: daystrom-mini
 spec:
   selector:
     app: safety-gateway

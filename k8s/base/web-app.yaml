@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-app
-  namespace: daystrom-ai
+  namespace: daystrom-mini
   labels:
     app: web-app
-    app.kubernetes.io/part-of: daystrom-ai
+    app.kubernetes.io/part-of: daystrom-mini
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: web-app
-          image: daystrom-ai/web-app:latest
+          image: daystrom-mini/web-app:latest
           ports:
             - containerPort: 3000
           envFrom:
@@ -28,7 +28,7 @@ spec:
             - name: OTEL_SERVICE_NAME
               value: "web-app"
             - name: API_URL
-              value: "http://request-orchestrator.daystrom-ai.svc.cluster.local:8080"
+              value: "http://request-orchestrator.daystrom-mini.svc.cluster.local:8080"
           resources:
             requests:
               cpu: 100m
@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: web-app
-  namespace: daystrom-ai
+  namespace: daystrom-mini
 spec:
   type: NodePort
   selector:

@@ -4,10 +4,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mock-safety
-  namespace: daystrom-ai
+  namespace: daystrom-mini
   labels:
     app: mock-safety
-    app.kubernetes.io/part-of: daystrom-ai
+    app.kubernetes.io/part-of: daystrom-mini
 spec:
   replicas: 1
   selector:
@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: mock-safety
-          image: daystrom-ai/mock-server:latest
+          image: daystrom-mini/mock-server:latest
           ports:
             - containerPort: 8000
           env:
@@ -46,7 +46,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mock-safety
-  namespace: daystrom-ai
+  namespace: daystrom-mini
 spec:
   selector:
     app: mock-safety

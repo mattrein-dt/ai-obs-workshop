@@ -2,9 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install protobuf compiler
+# Install protobuf compiler and build tools for grpcio
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    protobuf-compiler && rm -rf /var/lib/apt/lists/*
+    protobuf-compiler gcc python3-dev && rm -rf /var/lib/apt/lists/*
 
 COPY services/python/model-router/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

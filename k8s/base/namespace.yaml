@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: daystrom-ai
+  name: daystrom-mini

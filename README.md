@@ -2,7 +2,7 @@
 
 A self-contained AI inference platform running entirely in GitHub Codespaces on Kubernetes (k3d) — no GPU required.
 
-Derived from the Daystrom AI multi-cloud architecture, consolidated into a codespace-friendly deployment with a tiny quantized LLM (Qwen2.5-0.5B via llama.cpp).
+Derived from the Daystrom Mini multi-cloud architecture, consolidated into a codespace-friendly deployment with a tiny quantized LLM (Qwen2.5-0.5B via llama.cpp).
 
 ## Architecture
 

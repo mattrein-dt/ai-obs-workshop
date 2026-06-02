@@ -3,8 +3,8 @@
 # Creates a k3d cluster, builds service images, and deploys everything.
 set -euo pipefail
 
-CLUSTER_NAME="daystrom"
-REGISTRY_NAME="daystrom-registry"
+CLUSTER_NAME="daystrom-mini"
+REGISTRY_NAME="daystrom-mini-registry"
 REGISTRY_PORT=5111
 
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -66,9 +66,9 @@ build_and_push() {
   local dockerfile="$2"
   
   echo "  Building $svc..."
-  docker build -t "${HOST_REGISTRY}/daystrom-ai/${svc}:latest" \
+  docker build -t "${HOST_REGISTRY}/daystrom-mini/${svc}:latest" \
     -f "${dockerfile}" . --quiet
-  docker push "${HOST_REGISTRY}/daystrom-ai/${svc}:latest"
+  docker push "${HOST_REGISTRY}/daystrom-mini/${svc}:latest"
 }
 
 # Java services (Spring Boot)
@@ -89,10 +89,10 @@ echo ""
 echo "Deploying to cluster..."
 
 # Patch the DT secret with actual values
-kubectl create namespace daystrom-ai --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace daystrom-mini --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create secret generic dt-credentials \
-  --namespace daystrom-ai \
+  --namespace daystrom-mini \
   --from-literal="DT_ENDPOINT=${DT_ENDPOINT}" \
   --from-literal="DT_API_TOKEN=${DT_API_TOKEN}" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -100,23 +100,23 @@ kubectl create secret generic dt-credentials \
 # Apply with image override to local registry (use cluster-side hostname)
 kubectl apply -k k8s/base/ \
   --dry-run=client -o yaml | \
-  sed "s|daystrom-ai/|${CLUSTER_REGISTRY}/daystrom-ai/|g" | \
+  sed "s|daystrom-mini/|${CLUSTER_REGISTRY}/daystrom-mini/|g" | \
   kubectl apply -f -
 
 # ─── Wait for rollout ───────────────────────────────────────────────
 echo ""
 echo "Waiting for deployments..."
-kubectl -n daystrom-ai rollout status deployment/redis --timeout=60s
-kubectl -n daystrom-ai rollout status deployment/postgres --timeout=60s
-kubectl -n daystrom-ai rollout status deployment/otel-collector --timeout=60s
-kubectl -n daystrom-ai rollout status deployment/mock-safety --timeout=60s
-kubectl -n daystrom-ai rollout status deployment/llama-cpp --timeout=180s
-kubectl -n daystrom-ai rollout status deployment/request-orchestrator --timeout=120s
-kubectl -n daystrom-ai rollout status deployment/prompt-cache --timeout=120s
-kubectl -n daystrom-ai rollout status deployment/safety-gateway --timeout=120s
-kubectl -n daystrom-ai rollout status deployment/model-router --timeout=120s
-kubectl -n daystrom-ai rollout status deployment/inference-pool --timeout=120s
-kubectl -n daystrom-ai rollout status deployment/web-app --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/redis --timeout=60s
+kubectl -n daystrom-mini rollout status deployment/postgres --timeout=60s
+kubectl -n daystrom-mini rollout status deployment/otel-collector --timeout=60s
+kubectl -n daystrom-mini rollout status deployment/mock-safety --timeout=60s
+kubectl -n daystrom-mini rollout status deployment/llama-cpp --timeout=180s
+kubectl -n daystrom-mini rollout status deployment/request-orchestrator --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/prompt-cache --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/safety-gateway --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/model-router --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/inference-pool --timeout=120s
+kubectl -n daystrom-mini rollout status deployment/web-app --timeout=120s
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -125,5 +125,5 @@ echo "║                                                            ║"
 echo "║  Web UI:  http://localhost:3000                            ║"
 echo "║  API:     http://localhost:8080                            ║"
 echo "║                                                            ║"
-echo "║  kubectl -n daystrom-ai get pods                           ║"
+echo "║  kubectl -n daystrom-mini get pods                           ║"
 echo "╚══════════════════════════════════════════════════════════════╝"

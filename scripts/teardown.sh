@@ -2,8 +2,8 @@
 # teardown.sh — Remove the k3d cluster and registry.
 set -euo pipefail
 
-CLUSTER_NAME="daystrom"
-REGISTRY_NAME="daystrom-registry"
+CLUSTER_NAME="daystrom-mini"
+REGISTRY_NAME="daystrom-mini-registry"
 
 echo "Tearing down workshop environment..."
 

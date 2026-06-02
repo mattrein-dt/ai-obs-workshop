@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: request-orchestrator
-  namespace: daystrom-ai
+  namespace: daystrom-mini
   labels:
     app: request-orchestrator
-    app.kubernetes.io/part-of: daystrom-ai
+    app.kubernetes.io/part-of: daystrom-mini
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: request-orchestrator
-          image: daystrom-ai/request-orchestrator:latest
+          image: daystrom-mini/request-orchestrator:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: request-orchestrator
-  namespace: daystrom-ai
+  namespace: daystrom-mini
 spec:
   selector:
     app: request-orchestrator
