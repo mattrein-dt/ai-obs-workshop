@@ -48,9 +48,9 @@ spec:
               memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8081
-            initialDelaySeconds: 10
+              path: /actuator/health
+              port: 9090
+            initialDelaySeconds: 15
             periodSeconds: 5
 ---
 apiVersion: v1
