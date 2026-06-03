@@ -58,7 +58,7 @@ class ModelRouterServicer(model_router_pb2_grpc.ModelRouterServiceServicer):
 
     def __init__(self):
         self.tracer = trace.get_tracer(__name__)
-        self.http_client = httpx.Client(timeout=60.0)
+        self.http_client = httpx.Client(timeout=120.0)
 
     def RouteInference(self, request, context):
         with self.tracer.start_as_current_span("model_router.route") as span:
@@ -90,7 +90,11 @@ class ModelRouterServicer(model_router_pb2_grpc.ModelRouterServiceServicer):
                 if STREAM_RESPONSES:
                     # Stream from inference pool
                     with self.http_client.stream("POST", endpoint, json=payload) as response:
-                        response.raise_for_status()
+                        if response.status_code >= 400:
+                            error_body = response.read().decode("utf-8", errors="replace")
+                            logger.error("Inference pool returned %d: %s", response.status_code, error_body)
+                            context.abort(grpc.StatusCode.INTERNAL, f"Inference failed: {response.status_code}: {error_body[:200]}")
+                            return
                         buffer = ""
                         for chunk in response.iter_text():
                             buffer += chunk
@@ -131,10 +135,6 @@ class ModelRouterServicer(model_router_pb2_grpc.ModelRouterServiceServicer):
                         finish_reason="stop",
                     )
 
-            except httpx.HTTPStatusError as e:
-                logger.error("Inference pool returned %s: %s", e.response.status_code, e.response.text)
-                span.record_exception(e)
-                context.abort(grpc.StatusCode.INTERNAL, f"Inference failed: {e.response.status_code}")
             except Exception as e:
                 logger.error("Inference error: %s", e)
                 span.record_exception(e)
