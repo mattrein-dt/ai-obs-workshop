@@ -7,9 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.daystrom.proto.*;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 @Service
 public class GrpcClientService {
@@ -78,25 +76,37 @@ public class GrpcClientService {
     public Iterator<String> streamInference(String model, String prompt, String tenantId) {
         Span span = tracer.spanBuilder("inference.stream").startSpan();
         span.setAttribute("gen_ai.request.model", model);
-        try {
-            RouteInferenceRequest request = RouteInferenceRequest.newBuilder()
-                    .setModelId(model)
-                    .setPrompt(prompt)
-                    .setMaxTokens(256)
-                    .setTemperature(0.7f)
-                    .setTenantId(tenantId)
-                    .build();
 
-            Iterator<RouteInferenceResponse> responses = modelRouterStub.routeInference(request);
-            List<String> tokens = new ArrayList<>();
-            while (responses.hasNext()) {
-                RouteInferenceResponse resp = responses.next();
-                tokens.add(resp.getText());
+        RouteInferenceRequest request = RouteInferenceRequest.newBuilder()
+                .setModelId(model)
+                .setPrompt(prompt)
+                .setMaxTokens(256)
+                .setTemperature(0.7f)
+                .setTenantId(tenantId)
+                .build();
+
+        Iterator<RouteInferenceResponse> responses = modelRouterStub.routeInference(request);
+
+        // Return a wrapper that streams tokens through and ends the span when exhausted
+        return new Iterator<String>() {
+            private int tokenCount = 0;
+
+            @Override
+            public boolean hasNext() {
+                boolean has = responses.hasNext();
+                if (!has) {
+                    span.setAttribute("gen_ai.response.tokens", tokenCount);
+                    span.end();
+                }
+                return has;
             }
-            span.setAttribute("gen_ai.response.tokens", tokens.size());
-            return tokens.iterator();
-        } finally {
-            span.end();
-        }
+
+            @Override
+            public String next() {
+                RouteInferenceResponse resp = responses.next();
+                tokenCount++;
+                return resp.getText();
+            }
+        };
     }
 }
