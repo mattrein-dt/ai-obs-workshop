@@ -31,7 +31,8 @@ public class ProxyController {
 
     private static final Set<String> HOP_BY_HOP = Set.of(
             "host", "connection", "transfer-encoding", "keep-alive",
-            "upgrade", "proxy-authorization", "proxy-authenticate", "te", "trailers");
+            "upgrade", "proxy-authorization", "proxy-authenticate", "te", "trailers",
+            "content-length");
 
     private final RestTemplate restTemplate;
     private final HttpClient httpClient;
