@@ -6,7 +6,6 @@ namespace: daystrom-mini
 resources:
   - namespace.yaml
   - configmaps.yaml
-  - dt-secret.yaml
   - redis.yaml
   - postgres.yaml
   - otel-collector.yaml
@@ -19,5 +18,7 @@ resources:
   - inference-pool.yaml
   - web-app.yaml
 
-commonLabels:
-  app.kubernetes.io/managed-by: workshop
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: workshop
+    includeSelectors: false
