@@ -77,7 +77,10 @@ class ModelRouterServicer(model_router_pb2_grpc.ModelRouterServiceServicer):
             # Build OpenAI-compatible request
             payload = {
                 "model": pool["model"],
-                "messages": [{"role": "user", "content": request.prompt}],
+                "messages": [
+                    {"role": "system", "content": "You are a helpful assistant. Always respond in English."},
+                    {"role": "user", "content": request.prompt},
+                ],
                 "max_tokens": request.max_tokens or 256,
                 "temperature": request.temperature or 0.7,
                 "stream": STREAM_RESPONSES,
