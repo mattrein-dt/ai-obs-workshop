@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: inference-pool
+  mvc:
+    async:
+      request-timeout: 120000
 
 inference-pool:
   vllm-base-url: ${VLLM_BASE_URL:http://localhost:8080}

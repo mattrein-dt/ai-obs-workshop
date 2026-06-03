@@ -11,7 +11,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Enumeration;
 
@@ -21,6 +28,7 @@ public class ProxyController {
     private static final Logger log = LoggerFactory.getLogger(ProxyController.class);
 
     private final RestTemplate restTemplate;
+    private final HttpClient httpClient;
     private final String vllmBaseUrl;
     private final String poolName;
     private final String poolType;
@@ -33,6 +41,9 @@ public class ProxyController {
             @Value("${inference-pool.pool-type}") String poolType,
             MeterRegistry meterRegistry) {
         this.restTemplate = new RestTemplate();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
         this.vllmBaseUrl = vllmBaseUrl;
         this.poolName = poolName;
         this.poolType = poolType;
@@ -45,52 +56,82 @@ public class ProxyController {
     }
 
     @RequestMapping("/v1/**")
-    public ResponseEntity<byte[]> proxy(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
-        return latencyTimer.record(() -> {
-            String path = request.getRequestURI();
-            String queryString = request.getQueryString();
-            String targetUrl = vllmBaseUrl + path + (queryString != null ? "?" + queryString : "");
+    public ResponseEntity<StreamingResponseBody> proxy(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
+        String path = request.getRequestURI();
+        String queryString = request.getQueryString();
+        String targetUrl = vllmBaseUrl + path + (queryString != null ? "?" + queryString : "");
 
-            Span span = Span.current();
-            span.setAttribute("pool.name", poolName);
-            span.setAttribute("pool.type", poolType);
-            span.setAttribute("inference.target_url", targetUrl);
+        Span span = Span.current();
+        span.setAttribute("pool.name", poolName);
+        span.setAttribute("pool.type", poolType);
+        span.setAttribute("inference.target_url", targetUrl);
 
-            log.info("Proxying {} {} → {}", request.getMethod(), path, targetUrl);
-            requestCounter.increment();
+        log.info("Proxying {} {} → {}", request.getMethod(), path, targetUrl);
+        requestCounter.increment();
 
-            // Build headers (skip hop-by-hop)
-            HttpHeaders headers = new HttpHeaders();
+        try {
+            // Build the upstream request
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(targetUrl))
+                    .timeout(Duration.ofSeconds(120));
+
+            // Copy non-hop-by-hop headers
             Enumeration<String> headerNames = request.getHeaderNames();
             while (headerNames.hasMoreElements()) {
                 String name = headerNames.nextElement();
                 if (!isHopByHopHeader(name)) {
-                    headers.put(name, Collections.list(request.getHeaders(name)));
+                    reqBuilder.header(name, request.getHeader(name));
                 }
             }
 
-            HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
-            HttpMethod method = HttpMethod.valueOf(request.getMethod());
-
-            try {
-                ResponseEntity<byte[]> response = restTemplate.exchange(
-                        targetUrl, method, entity, byte[].class);
-
-                // Add pool metadata headers
-                HttpHeaders responseHeaders = new HttpHeaders();
-                responseHeaders.putAll(response.getHeaders());
-                responseHeaders.set("X-Pool-Name", poolName);
-                responseHeaders.set("X-Pool-Type", poolType);
-
-                span.setAttribute("http.status_code", response.getStatusCode().value());
-                return new ResponseEntity<>(response.getBody(), responseHeaders, response.getStatusCode());
-            } catch (Exception e) {
-                log.error("Proxy failed: {}", e.getMessage());
-                span.recordException(e);
-                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                        .body(("{\"error\": \"inference backend unavailable: " + e.getMessage() + "\"}").getBytes());
+            // Set method and body
+            if (body != null && body.length > 0) {
+                reqBuilder.method(request.getMethod(), HttpRequest.BodyPublishers.ofByteArray(body));
+            } else {
+                reqBuilder.method(request.getMethod(), HttpRequest.BodyPublishers.noBody());
             }
-        });
+
+            // Send request, get streaming response
+            HttpResponse<InputStream> response = httpClient.send(
+                    reqBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+
+            // Determine content type from upstream
+            String contentType = response.headers().firstValue("content-type")
+                    .orElse("application/json");
+
+            span.setAttribute("http.status_code", response.statusCode());
+
+            StreamingResponseBody streamBody = outputStream -> {
+                Timer.Sample sample = Timer.start();
+                try (InputStream is = response.body()) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                        outputStream.flush();
+                    }
+                } finally {
+                    sample.stop(latencyTimer);
+                }
+            };
+
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("Content-Type", contentType);
+            responseHeaders.set("X-Pool-Name", poolName);
+            responseHeaders.set("X-Pool-Type", poolType);
+            responseHeaders.set("Cache-Control", "no-cache");
+
+            return new ResponseEntity<>(streamBody, responseHeaders,
+                    HttpStatus.valueOf(response.statusCode()));
+        } catch (Exception e) {
+            log.error("Proxy failed: {}", e.getMessage());
+            span.recordException(e);
+            StreamingResponseBody errorBody = out -> {
+                out.write(("{\"error\": \"inference backend unavailable: " + e.getMessage() + "\"}").getBytes());
+                out.flush();
+            };
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorBody);
+        }
     }
 
     @GetMapping("/health")
