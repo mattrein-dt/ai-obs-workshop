@@ -25,6 +25,8 @@ spec:
             - configMapRef:
                 name: otel-config
           env:
+            - name: HOSTNAME
+              value: "0.0.0.0"
             - name: OTEL_SERVICE_NAME
               value: "web-app"
             - name: API_URL
