@@ -34,9 +34,9 @@ build:
 	@docker build -t $(REGISTRY)/daystrom-mini/mock-server:latest -f services/python/mock-server/Dockerfile .
 	@docker build -t $(REGISTRY)/daystrom-mini/web-app:latest -f services/typescript/web-app/Dockerfile .
 
-## Build and push a single service (usage: make build-svc SVC=model-router LANG=python)
+## Build and push a single service (usage: make build-svc SVC=inference-pool DF=services/java/inference-pool/Dockerfile)
 build-svc:
-	@docker build -t $(REGISTRY)/daystrom-mini/$(SVC):latest services/$(LANG)/$(SVC)
+	@docker build -t $(REGISTRY)/daystrom-mini/$(SVC):latest -f $(DF) .
 	@docker push $(REGISTRY)/daystrom-mini/$(SVC):latest
 	@kubectl -n daystrom-mini rollout restart deployment/$(SVC)
 

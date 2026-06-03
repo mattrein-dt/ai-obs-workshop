@@ -44,8 +44,6 @@ else
   k3d cluster create "$CLUSTER_NAME" \
     --registry-use "k3d-${REGISTRY_NAME}:${REGISTRY_PORT}" \
     --agents 1 \
-    --port "3000:30000@server:0" \
-    --port "8080:30080@server:0" \
     --k3s-arg "--disable=traefik@server:0" \
     --wait
 fi
@@ -118,6 +116,22 @@ kubectl -n daystrom-mini rollout status deployment/model-router --timeout=120s
 kubectl -n daystrom-mini rollout status deployment/inference-pool --timeout=120s
 kubectl -n daystrom-mini rollout status deployment/web-app --timeout=120s
 
+# ─── Port forwarding ────────────────────────────────────────────────
+# kubectl port-forward creates real host processes that the codespace
+# port scanner detects, making them visible in the Ports tab.
+echo ""
+echo "Starting port forwards..."
+
+# Kill any existing port-forwards
+pkill -f "kubectl.*port-forward" 2>/dev/null || true
+sleep 1
+
+kubectl -n daystrom-mini port-forward svc/web-app 3000:3000 &>/dev/null &
+kubectl -n daystrom-mini port-forward svc/request-orchestrator 8080:8080 &>/dev/null &
+
+# Give port-forwards a moment to bind
+sleep 2
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║  ✓ All services deployed!                                   ║"
@@ -125,5 +139,6 @@ echo "║                                                            ║"
 echo "║  Web UI:  http://localhost:3000                            ║"
 echo "║  API:     http://localhost:8080                            ║"
 echo "║                                                            ║"
-echo "║  kubectl -n daystrom-mini get pods                           ║"
+echo "║  Ports are forwarded and visible in the Ports tab.         ║"
+echo "║  kubectl -n daystrom-mini get pods                         ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
